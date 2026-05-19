@@ -39,11 +39,13 @@ export function SubjectCard({
           {grades.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {grades.slice(0, 8).map((g) => (
-                <Badge key={g.id} variant="default" className="text-[10px] gap-0.5">
-                  <span className="font-bold">{formatGrade(g.value, 0)}</span>
-                  <span className="text-subtle">{weightLabel(g.weight)}</span>
-                  <span className="text-subtle">{gradeTypeLabel(g.type).slice(0, 2)}</span>
-                </Badge>
+                <Link key={g.id} href={`/noten/${g.id}/bearbeiten`}>
+                  <Badge variant="default" className="text-[10px] gap-0.5 cursor-pointer hover:ring-1 hover:ring-accent transition">
+                    <span className="font-bold">{formatGrade(g.value, 0)}</span>
+                    <span className="text-subtle">{weightLabel(g.weight)}</span>
+                    <span className="text-subtle">{gradeTypeLabel(g.type).slice(0, 2)}</span>
+                  </Badge>
+                </Link>
               ))}
               {grades.length > 8 && (
                 <Badge variant="default" className="text-[10px]">+{grades.length - 8}</Badge>
