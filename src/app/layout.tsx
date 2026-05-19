@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AppShell } from "@/components/shell/app-shell";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 
@@ -52,7 +51,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         className="min-h-full"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <AppShell>{children}</AppShell>
+        {children}
         <ServiceWorkerRegister />
         <InstallPrompt />
       </body>
