@@ -35,10 +35,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
-COPY --from=deps /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 
 USER nextjs
 EXPOSE 8080
 
-CMD ["sh", "-c", "./node_modules/.bin/prisma db push --skip-generate --accept-data-loss && node server.js"]
+CMD ["node", "server.js"]
