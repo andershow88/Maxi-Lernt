@@ -85,7 +85,7 @@ export function StudyTimer({ stats }: { stats: Stats }) {
           </div>
 
           {!running && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="flex flex-wrap gap-1.5">
               {stats.subjects.map((s) => {
                 const I = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[s.icon] ?? Icons.BookOpen;
                 return (
@@ -93,11 +93,11 @@ export function StudyTimer({ stats }: { stats: Stats }) {
                     key={s.id}
                     onClick={() => setSelectedId(s.id)}
                     className={cn(
-                      "flex items-center gap-1.5 shrink-0 rounded-xl border px-3 py-2 text-xs font-medium transition cursor-pointer",
+                      "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition cursor-pointer",
                       selectedId === s.id ? "border-accent bg-accent/10 text-accent" : "border-border bg-bg-elevated text-muted",
                     )}
                   >
-                    <I className="h-3.5 w-3.5" /> {s.name}
+                    <I className="h-3 w-3" /> {s.name}
                   </button>
                 );
               })}
