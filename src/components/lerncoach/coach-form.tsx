@@ -35,11 +35,13 @@ export function CoachForm({ subjects }: { subjects: SubjectOption[] }) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingType, setLoadingType] = useState<"learn" | "quiz" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function startLearn() {
     if (!subject || !topic.trim()) return;
     setLoading(true);
+    setLoadingType("learn");
     setError(null);
     setLesson(null);
 
@@ -61,12 +63,14 @@ export function CoachForm({ subjects }: { subjects: SubjectOption[] }) {
       setError("Verbindungsfehler. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
+      setLoadingType(null);
     }
   }
 
   async function startQuiz() {
     if (!subject || !topic.trim()) return;
     setLoading(true);
+    setLoadingType("quiz");
     setError(null);
     setQuiz(null);
 
@@ -88,6 +92,7 @@ export function CoachForm({ subjects }: { subjects: SubjectOption[] }) {
       setError("Verbindungsfehler. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
+      setLoadingType(null);
     }
   }
 
@@ -161,6 +166,34 @@ export function CoachForm({ subjects }: { subjects: SubjectOption[] }) {
             </ul>
           </div>
         </>
+      )}
+
+      {loading && loadingType && (
+        <Card>
+          <CardContent className="p-8 flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="h-16 w-16 rounded-full border-4 border-border" />
+              <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-transparent border-t-accent animate-spin" />
+              <div className="absolute inset-0 grid place-items-center">
+                {loadingType === "quiz" ? (
+                  <ClipboardCheck className="h-6 w-6 text-accent" />
+                ) : (
+                  <Brain className="h-6 w-6 text-accent" />
+                )}
+              </div>
+            </div>
+            <div className="text-center space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                {loadingType === "quiz" ? "Quiz wird erstellt..." : "Lerneinheit wird vorbereitet..."}
+              </p>
+              <p className="text-xs text-muted">
+                {loadingType === "quiz"
+                  ? "Die KI formuliert Fragen und Antworten zu deinem Thema."
+                  : "Die KI bereitet eine Erklärung speziell für dich vor."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {error && (
