@@ -293,9 +293,10 @@ export async function POST(req: Request) {
     return Response.json({
       reply: choice?.message?.content ?? "Ich konnte keine Antwort generieren.",
     });
-  } catch (e) {
-    console.error("Assistant error:", e);
-    return Response.json({ error: "KI-Anfrage fehlgeschlagen." }, { status: 500 });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("Assistant error:", msg);
+    return Response.json({ error: `KI-Fehler: ${msg}` }, { status: 500 });
   }
 }
 
