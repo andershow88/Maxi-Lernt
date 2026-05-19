@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Send, Loader2, Check, XCircle, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,8 +18,7 @@ type Message = {
   confirmed?: boolean;
 };
 
-export function AISearch() {
-  const [open, setOpen] = useState(false);
+function AIPanel({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,27 +27,24 @@ export function AISearch() {
   const router = useRouter();
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 50);
-  }, [open]);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") handleClose();
+      if (e.key === "Escape") onClose();
     }
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
-  function handleClose() {
-    setOpen(false);
-    setQuery("");
-    setMessages([]);
-  }
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,45 +122,27 @@ export function AISearch() {
     }
   }
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-xl bg-surface/80 border border-border/50 px-3 py-1.5 text-xs text-muted hover:text-foreground hover:border-accent/40 transition cursor-pointer"
-      >
-        <Sparkles className="h-3 w-3" />
-        <span className="hidden sm:inline">Frag mich was...</span>
-        <span className="sm:hidden">KI</span>
-      </button>
-    );
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col">
-      {/* Backdrop — nur dunkel, kein Blur */}
-      <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
+    <div className="fixed inset-0" style={{ zIndex: 9999 }}>
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      {/* Chat-Panel — volle Breite auf Mobile, zentriert auf Desktop */}
       <div
-        className="relative mx-2 sm:mx-auto mt-3 sm:mt-12 w-auto sm:w-full sm:max-w-xl flex flex-col rounded-2xl border border-border bg-bg-elevated shadow-2xl overflow-hidden"
-        style={{ maxHeight: "calc(100dvh - 24px)" }}
+        className="absolute inset-x-0 top-0 bottom-0 sm:inset-auto sm:top-8 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-xl sm:max-h-[85dvh] sm:rounded-2xl flex flex-col border-0 sm:border border-border bg-bg-elevated shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
-          <Sparkles className="h-4 w-4 text-accent shrink-0" />
-          <span className="text-sm font-semibold text-foreground">KI-Assistent</span>
+        <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3 shrink-0">
+          <Sparkles className="h-5 w-5 text-accent shrink-0" />
+          <span className="text-base font-semibold text-foreground">KI-Assistent</span>
           <div className="flex-1" />
-          <button onClick={handleClose} className="grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-foreground transition cursor-pointer">
-            <X className="h-4.5 w-4.5" />
+          <button onClick={onClose} className="grid h-9 w-9 place-items-center rounded-xl text-muted hover:bg-surface hover:text-foreground transition cursor-pointer">
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-[200px]">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.length === 0 && (
-            <div className="text-center py-8 space-y-3">
-              <Sparkles className="mx-auto h-10 w-10 text-accent/30" />
+            <div className="text-center py-10 space-y-4">
+              <Sparkles className="mx-auto h-12 w-12 text-accent/30" />
               <p className="text-sm text-muted leading-relaxed px-4">
                 Stell mir eine Frage, frag nach deinen Noten oder sag mir was ich anlegen soll.
               </p>
@@ -172,7 +151,7 @@ export function AISearch() {
                   <button
                     key={ex}
                     onClick={() => { setQuery(ex); inputRef.current?.focus(); }}
-                    className="rounded-lg bg-surface border border-border/50 px-3 py-1.5 text-xs text-muted hover:text-foreground hover:border-accent/40 transition cursor-pointer"
+                    className="rounded-xl bg-surface border border-border/50 px-3.5 py-2 text-xs text-muted hover:text-foreground hover:border-accent/40 transition cursor-pointer"
                   >
                     {ex}
                   </button>
@@ -196,14 +175,14 @@ export function AISearch() {
                     <button
                       onClick={() => handleConfirm(i, true)}
                       disabled={loading}
-                      className="flex items-center gap-1.5 rounded-lg bg-success/15 px-3.5 py-2 text-xs font-semibold text-success hover:bg-success/25 transition cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-lg bg-success/15 px-4 py-2 text-xs font-semibold text-success hover:bg-success/25 transition cursor-pointer"
                     >
                       <Check className="h-3.5 w-3.5" /> Ja, anlegen
                     </button>
                     <button
                       onClick={() => handleConfirm(i, false)}
                       disabled={loading}
-                      className="flex items-center gap-1.5 rounded-lg bg-danger/15 px-3.5 py-2 text-xs font-semibold text-danger hover:bg-danger/25 transition cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-lg bg-danger/15 px-4 py-2 text-xs font-semibold text-danger hover:bg-danger/25 transition cursor-pointer"
                     >
                       <XCircle className="h-3.5 w-3.5" /> Nein
                     </button>
@@ -233,25 +212,49 @@ export function AISearch() {
           )}
         </div>
 
-        {/* Input */}
-        <form onSubmit={handleSubmit} className="border-t border-border/60 px-3 py-3 flex gap-2">
+        <form onSubmit={handleSubmit} className="border-t border-border/60 px-4 py-3 flex gap-2 shrink-0">
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Frage oder Anweisung eingeben..."
-            className="flex-1 rounded-xl border border-border bg-bg px-4 py-2.5 text-sm text-foreground placeholder:text-subtle focus:border-accent focus:outline-none"
+            className="flex-1 rounded-xl border border-border bg-bg px-4 py-3 text-sm text-foreground placeholder:text-subtle focus:border-accent focus:outline-none"
           />
           <button
             type="submit"
             disabled={!query.trim() || loading}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-white disabled:opacity-40 hover:bg-accent-2 transition cursor-pointer"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-white disabled:opacity-40 hover:bg-accent-2 transition cursor-pointer"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-4.5 w-4.5" />
           </button>
         </form>
       </div>
     </div>
+  );
+}
+
+export function AISearch() {
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 rounded-xl bg-surface/80 border border-border/50 px-4 py-2 text-sm text-muted hover:text-foreground hover:border-accent/40 transition cursor-pointer"
+      >
+        <Sparkles className="h-4 w-4" />
+        <span className="hidden sm:inline">Frag mich was...</span>
+        <span className="sm:hidden">KI</span>
+      </button>
+
+      {open && mounted && createPortal(
+        <AIPanel onClose={() => setOpen(false)} />,
+        document.body,
+      )}
+    </>
   );
 }
