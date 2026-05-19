@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Calendar, ScanText, BookOpenCheck } from "lucide-react";
+import { BarChart3, Calendar, ScanText, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", label: "Noten", icon: BarChart3 },
   { href: "/kalender", label: "Kalender", icon: Calendar },
   { href: "/scan", label: "Scan", icon: ScanText },
-  { href: "/erklaerer", label: "Erklärer", icon: BookOpenCheck },
+  { href: "/werkzeuge", label: "Werkzeuge", icon: Wrench },
 ];
 
 export function BottomNav() {

@@ -17,8 +17,10 @@ model Subject {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  grades Grade[]
-  events CalendarEvent[]
+  grades        Grade[]
+  events        CalendarEvent[]
+  studySessions StudySession[]
+  flashcards    Flashcard[]
 }
 
 model Grade {
@@ -100,6 +102,33 @@ model Settings {
   decimalPlaces Int    @default(1)
   sortOrder     String @default("best")
   theme         String @default("light")
+}
+
+model StudySession {
+  id        String   @id @default(cuid())
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  minutes   Int
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([subjectId])
+  @@index([date])
+}
+
+model Flashcard {
+  id        String   @id @default(cuid())
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  front     String
+  back      String   @db.Text
+  level     Int      @default(0)
+  nextReview DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subjectId])
+  @@index([nextReview])
 }
 
 model PushSubscription {
