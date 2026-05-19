@@ -158,6 +158,16 @@ function AIPanel({ onClose }: { onClose: () => void }) {
           try {
             const data = JSON.parse(payload);
 
+            if (data.error) {
+              fullText = `Fehler: ${data.error}`;
+              setMessages((prev) =>
+                prev.map((m, i) =>
+                  i === assistantIdx ? { ...m, text: fullText, streaming: false } : m,
+                ),
+              );
+              continue;
+            }
+
             if (data.pending_action) {
               pendingAction = { action: data.pending_action, data: data.pending_data };
               continue;

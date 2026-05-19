@@ -183,42 +183,46 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
   return { error: "Unbekannte Funktion" };
 }
 
-async function resolveToolCalls(openai: OpenAI, messages: Msg[]): Promise<{ messages: Msg[]; pending?: { action: string; data: Record<string, unknown> } }> {
-  let rounds = 0;
+function sseStream(openai: OpenAI, messages: Msg[], prefix?: object) {
+  const encoder = new TextEncoder();
 
-  while (rounds < 3) {
-    const completion = await openai.chat.completions.create({
-      model: MODEL,
-      messages,
-      tools,
-      max_completion_tokens: 800,
-      temperature: 0.5,
-    });
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        if (prefix) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(prefix)}\n\n`));
+        }
 
-    const choice = completion.choices[0];
-    if (choice?.finish_reason !== "tool_calls" || !choice.message.tool_calls) {
-      messages.push(choice.message);
-      return { messages };
-    }
+        const stream = await openai.chat.completions.create({
+          model: MODEL,
+          messages,
+          tools,
+          max_completion_tokens: 800,
+          temperature: 0.5,
+          stream: true,
+        });
 
-    rounds++;
-    messages.push(choice.message);
+        for await (const chunk of stream) {
+          const delta = chunk.choices[0]?.delta?.content;
+          if (delta) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: delta })}\n\n`));
+          }
+        }
 
-    for (const tc of choice.message.tool_calls) {
-      const args = JSON.parse(tc.function.arguments);
-      const result = await handleToolCall(tc.function.name, args);
-
-      if (result && typeof result === "object" && "pending_action" in (result as Record<string, unknown>)) {
-        const pending = result as { pending_action: string; data: Record<string, unknown> };
-        messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
-        return { messages, pending: { action: pending.pending_action, data: pending.data } };
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`));
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
       }
+    },
+  });
 
-      messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
-    }
-  }
-
-  return { messages };
+  return new Response(readable, {
+    headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+  });
 }
 
 const RequestSchema = z.object({
@@ -266,72 +270,47 @@ export async function POST(req: Request) {
       { role: "user", content: message },
     ];
 
-    // Resolve tool calls (non-streamed)
-    const { messages: resolved, pending } = await resolveToolCalls(openai, messages);
-
-    // If there's a pending action, stream the description
-    if (pending) {
-      const stream = await openai.chat.completions.create({
+    // Resolve tool calls non-streamed (up to 3 rounds)
+    let rounds = 0;
+    while (rounds < 3) {
+      const completion = await openai.chat.completions.create({
         model: MODEL,
-        messages: resolved,
-        max_completion_tokens: 300,
-        temperature: 0.3,
-        stream: true,
+        messages,
+        tools,
+        max_completion_tokens: 800,
+        temperature: 0.5,
       });
 
-      const encoder = new TextEncoder();
-      const readable = new ReadableStream({
-        async start(controller) {
-          // Send pending action metadata first
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ pending_action: pending.action, pending_data: pending.data })}\n\n`));
+      const choice = completion.choices[0];
 
-          for await (const chunk of stream) {
-            const delta = chunk.choices[0]?.delta?.content;
-            if (delta) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: delta })}\n\n`));
-            }
-          }
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-        },
-      });
+      // No tool calls — we have a final answer, stream it
+      if (choice?.finish_reason !== "tool_calls" || !choice.message.tool_calls) {
+        // Model already gave us text — stream from same context
+        return sseStream(openai, messages);
+      }
 
-      return new Response(readable, {
-        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-      });
-    }
+      rounds++;
+      messages.push(choice.message);
 
-    // Stream the final response
-    const lastMsg = resolved[resolved.length - 1];
-    if (lastMsg && "content" in lastMsg && typeof lastMsg.content === "string" && lastMsg.content) {
-      // Already have content from non-tool response — but let's re-stream for consistency
-    }
+      for (const tc of choice.message.tool_calls) {
+        const args = JSON.parse(tc.function.arguments);
+        const result = await handleToolCall(tc.function.name, args);
 
-    const stream = await openai.chat.completions.create({
-      model: MODEL,
-      messages: resolved.slice(0, -1),
-      max_completion_tokens: 800,
-      temperature: 0.5,
-      stream: true,
-    });
+        messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
 
-    const encoder = new TextEncoder();
-    const readable = new ReadableStream({
-      async start(controller) {
-        for await (const chunk of stream) {
-          const delta = chunk.choices[0]?.delta?.content;
-          if (delta) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: delta })}\n\n`));
-          }
+        // Pending action — stream the description with action metadata
+        if (result && typeof result === "object" && "pending_action" in (result as Record<string, unknown>)) {
+          const pending = result as { pending_action: string; data: Record<string, unknown> };
+          return sseStream(openai, messages, {
+            pending_action: pending.pending_action,
+            pending_data: pending.data,
+          });
         }
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-        controller.close();
-      },
-    });
+      }
+    }
 
-    return new Response(readable, {
-      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-    });
+    // Fallback after max rounds
+    return sseStream(openai, messages);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("Assistant error:", msg);
