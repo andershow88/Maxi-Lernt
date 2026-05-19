@@ -6,6 +6,9 @@ import type OpenAI from "openai";
 export const dynamic = "force-dynamic";
 
 type Tool = NonNullable<OpenAI.ChatCompletionCreateParams["tools"]>[number];
+type Msg = OpenAI.ChatCompletionMessageParam;
+
+const MODEL = "gpt-5.4-mini-2026-03-17";
 
 const tools: Tool[] = [
   {
@@ -82,7 +85,6 @@ const tools: Tool[] = [
   },
 ];
 
-
 async function handleToolCall(name: string, args: Record<string, unknown>): Promise<unknown> {
   if (name === "get_grades") {
     const where: Record<string, unknown> = {};
@@ -138,7 +140,6 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
       where: { name: { contains: args.subjectName as string, mode: "insensitive" } },
     });
     if (!subject) return { error: `Fach "${args.subjectName}" nicht gefunden` };
-
     return {
       pending_action: "create_grade",
       data: {
@@ -165,7 +166,6 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
         subjectName = subject.name;
       }
     }
-
     return {
       pending_action: "create_event",
       data: {
@@ -181,6 +181,44 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
   }
 
   return { error: "Unbekannte Funktion" };
+}
+
+async function resolveToolCalls(openai: OpenAI, messages: Msg[]): Promise<{ messages: Msg[]; pending?: { action: string; data: Record<string, unknown> } }> {
+  let rounds = 0;
+
+  while (rounds < 3) {
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      messages,
+      tools,
+      max_completion_tokens: 800,
+      temperature: 0.5,
+    });
+
+    const choice = completion.choices[0];
+    if (choice?.finish_reason !== "tool_calls" || !choice.message.tool_calls) {
+      messages.push(choice.message);
+      return { messages };
+    }
+
+    rounds++;
+    messages.push(choice.message);
+
+    for (const tc of choice.message.tool_calls) {
+      const args = JSON.parse(tc.function.arguments);
+      const result = await handleToolCall(tc.function.name, args);
+
+      if (result && typeof result === "object" && "pending_action" in (result as Record<string, unknown>)) {
+        const pending = result as { pending_action: string; data: Record<string, unknown> };
+        messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
+        return { messages, pending: { action: pending.pending_action, data: pending.data } };
+      }
+
+      messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
+    }
+  }
+
+  return { messages };
 }
 
 const RequestSchema = z.object({
@@ -203,12 +241,11 @@ export async function POST(req: Request) {
   const body = await req.json();
   const { message, confirm } = RequestSchema.parse(body);
 
-  // Confirmed action — execute it
   if (confirm) {
     try {
       const result = await executeAction(confirm.action, confirm.data);
       return Response.json(result);
-    } catch (e) {
+    } catch {
       return Response.json({ error: "Aktion fehlgeschlagen." }, { status: 500 });
     }
   }
@@ -216,7 +253,7 @@ export async function POST(req: Request) {
   const today = new Date().toISOString().split("T")[0];
   const systemPrompt =
     `Du bist der KI-Assistent in der Schulplaner-App "Maxi Lernt" für einen Schüler der 9. Klasse in Bayern. ` +
-    `Heute ist ${today}. Antworte auf Deutsch, kurz und freundlich. ` +
+    `Heute ist ${today}. Antworte auf Deutsch, kurz und freundlich. Nutze Markdown für Formatierung (fett, Listen, etc.). ` +
     `Du kannst allgemeine Fragen beantworten UND auf Schuldaten zugreifen (Noten, Termine, Fächer). ` +
     `Wenn der Schüler eine Aktion will (Note eintragen, Termin anlegen), nutze die passende Funktion. ` +
     `WICHTIG: Bei Aktionen (create_grade, create_event) beschreibe dem Schüler GENAU was du anlegen wirst und frage ob das so passt. ` +
@@ -224,74 +261,76 @@ export async function POST(req: Request) {
     `Halte Antworten kurz (2-3 Sätze wenn möglich).`;
 
   try {
-    const messages: Parameters<typeof openai.chat.completions.create>[0]["messages"] = [
+    const messages: Msg[] = [
       { role: "system", content: systemPrompt },
       { role: "user", content: message },
     ];
 
-    let completion = await openai.chat.completions.create({
-      model: "gpt-5.4-mini-2026-03-17",
-      messages,
-      tools,
-      max_completion_tokens: 800,
-      temperature: 0.5,
-    });
+    // Resolve tool calls (non-streamed)
+    const { messages: resolved, pending } = await resolveToolCalls(openai, messages);
 
-    let choice = completion.choices[0];
-
-    // Handle tool calls (up to 3 rounds)
-    let rounds = 0;
-    while (choice?.finish_reason === "tool_calls" && choice.message.tool_calls && rounds < 3) {
-      rounds++;
-      messages.push(choice.message);
-
-      for (const tc of choice.message.tool_calls) {
-        const args = JSON.parse(tc.function.arguments);
-        const result = await handleToolCall(tc.function.name, args);
-
-        // If it's a pending action, return it for confirmation
-        if (result && typeof result === "object" && "pending_action" in (result as Record<string, unknown>)) {
-          const pending = result as { pending_action: string; data: Record<string, unknown> };
-          messages.push({
-            role: "tool",
-            tool_call_id: tc.id,
-            content: JSON.stringify(result),
-          });
-
-          // Let the model describe what it wants to do
-          const descCompletion = await openai.chat.completions.create({
-            model: "gpt-5.4-mini-2026-03-17",
-            messages,
-            max_completion_tokens: 300,
-            temperature: 0.3,
-          });
-
-          return Response.json({
-            reply: descCompletion.choices[0]?.message?.content ?? "Soll ich das so anlegen?",
-            pending_action: pending.pending_action,
-            pending_data: pending.data,
-          });
-        }
-
-        messages.push({
-          role: "tool",
-          tool_call_id: tc.id,
-          content: JSON.stringify(result),
-        });
-      }
-
-      completion = await openai.chat.completions.create({
-        model: "gpt-5.4-mini-2026-03-17",
-        messages,
-        tools,
-        max_completion_tokens: 800,
-        temperature: 0.5,
+    // If there's a pending action, stream the description
+    if (pending) {
+      const stream = await openai.chat.completions.create({
+        model: MODEL,
+        messages: resolved,
+        max_completion_tokens: 300,
+        temperature: 0.3,
+        stream: true,
       });
-      choice = completion.choices[0];
+
+      const encoder = new TextEncoder();
+      const readable = new ReadableStream({
+        async start(controller) {
+          // Send pending action metadata first
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ pending_action: pending.action, pending_data: pending.data })}\n\n`));
+
+          for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta?.content;
+            if (delta) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: delta })}\n\n`));
+            }
+          }
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        },
+      });
+
+      return new Response(readable, {
+        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+      });
     }
 
-    return Response.json({
-      reply: choice?.message?.content ?? "Ich konnte keine Antwort generieren.",
+    // Stream the final response
+    const lastMsg = resolved[resolved.length - 1];
+    if (lastMsg && "content" in lastMsg && typeof lastMsg.content === "string" && lastMsg.content) {
+      // Already have content from non-tool response — but let's re-stream for consistency
+    }
+
+    const stream = await openai.chat.completions.create({
+      model: MODEL,
+      messages: resolved.slice(0, -1),
+      max_completion_tokens: 800,
+      temperature: 0.5,
+      stream: true,
+    });
+
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of stream) {
+          const delta = chunk.choices[0]?.delta?.content;
+          if (delta) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: delta })}\n\n`));
+          }
+        }
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      },
+    });
+
+    return new Response(readable, {
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, Send, Loader2, Check, XCircle, Sparkles } from "lucide-react";
+import { X, Send, Loader2, Check, XCircle, Sparkles, Copy, CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,50 @@ type Message = {
   text: string;
   pending?: PendingAction;
   confirmed?: boolean;
+  streaming?: boolean;
+  copied?: boolean;
 };
+
+function Markdown({ text }: { text: string }) {
+  const html = text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`(.+?)`/g, '<code class="rounded bg-black/10 px-1 py-0.5 text-[12px]">$1</code>')
+    .replace(/^- (.+)$/gm, '<li class="ml-3 list-disc">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-3 list-decimal">$2</li>')
+    .replace(/(<li.*<\/li>)/g, "$1")
+    .replace(/\n/g, "<br />");
+
+  return (
+    <div
+      className="prose-sm text-sm leading-relaxed [&_strong]:font-bold [&_li]:my-0.5 [&_code]:text-accent"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex items-center gap-1 mt-2 text-[10px] text-muted hover:text-foreground transition cursor-pointer"
+    >
+      {copied ? (
+        <><CheckCheck className="h-3 w-3 text-success" /> Kopiert</>
+      ) : (
+        <><Copy className="h-3 w-3" /> Kopieren</>
+      )}
+    </button>
+  );
+}
 
 function AIPanel({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
@@ -46,13 +89,7 @@ function AIPanel({ onClose }: { onClose: () => void }) {
     };
   }, [onClose]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!query.trim() || loading) return;
-
-    const userMsg = query.trim();
-    setQuery("");
-    setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
+  const streamResponse = useCallback(async (userMsg: string) => {
     setLoading(true);
 
     try {
@@ -61,27 +98,111 @@ function AIPanel({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg }),
       });
-      const data = await res.json();
 
-      if (data.error) {
-        setMessages((prev) => [...prev, { role: "assistant", text: data.error }]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            text: data.reply,
-            pending: data.pending_action
-              ? { action: data.pending_action, data: data.pending_data }
-              : undefined,
-          },
-        ]);
+      if (!res.ok) {
+        const data = await res.json();
+        setMessages((prev) => [...prev, { role: "assistant", text: data.error ?? "Fehler." }]);
+        setLoading(false);
+        return;
       }
+
+      const contentType = res.headers.get("content-type") ?? "";
+
+      // Non-streamed response (confirm actions)
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+        if (data.error) {
+          setMessages((prev) => [...prev, { role: "assistant", text: data.error }]);
+        } else if (data.success) {
+          setMessages((prev) => [...prev, { role: "assistant", text: data.message }]);
+          router.refresh();
+        }
+        setLoading(false);
+        return;
+      }
+
+      // SSE stream
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setMessages((prev) => [...prev, { role: "assistant", text: "Streaming nicht unterstützt." }]);
+        setLoading(false);
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let pendingAction: PendingAction | undefined;
+      let buffer = "";
+      let assistantIdx: number | null = null;
+
+      // Add placeholder message
+      setMessages((prev) => {
+        assistantIdx = prev.length;
+        return [...prev, { role: "assistant", text: "", streaming: true }];
+      });
+
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (payload === "[DONE]") continue;
+
+          try {
+            const data = JSON.parse(payload);
+
+            if (data.pending_action) {
+              pendingAction = { action: data.pending_action, data: data.pending_data };
+              continue;
+            }
+
+            if (data.token) {
+              fullText += data.token;
+              const currentText = fullText;
+              const currentPending = pendingAction;
+              setMessages((prev) =>
+                prev.map((m, i) =>
+                  i === assistantIdx
+                    ? { ...m, text: currentText, pending: currentPending }
+                    : m,
+                ),
+              );
+            }
+          } catch {}
+        }
+      }
+
+      // Finalize
+      const finalPending = pendingAction;
+      setMessages((prev) =>
+        prev.map((m, i) =>
+          i === assistantIdx
+            ? { ...m, streaming: false, pending: finalPending }
+            : m,
+        ),
+      );
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", text: "Verbindungsfehler." }]);
     } finally {
       setLoading(false);
     }
+  }, [router]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!query.trim() || loading) return;
+
+    const userMsg = query.trim();
+    setQuery("");
+    setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
+    await streamResponse(userMsg);
   }
 
   async function handleConfirm(msgIndex: number, confirmed: boolean) {
@@ -163,14 +284,30 @@ function AIPanel({ onClose }: { onClose: () => void }) {
           {messages.map((msg, i) => (
             <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
               <div className={cn(
-                "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                "max-w-[85%] rounded-2xl px-4 py-3",
                 msg.role === "user"
                   ? "bg-accent text-white rounded-br-md"
                   : "bg-surface text-foreground rounded-bl-md",
               )}>
-                <p className="whitespace-pre-wrap">{msg.text}</p>
+                {msg.role === "user" ? (
+                  <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                ) : (
+                  <>
+                    {msg.text ? <Markdown text={msg.text} /> : null}
+                    {msg.streaming && !msg.text && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted" />
+                    )}
+                    {msg.streaming && msg.text && (
+                      <span className="inline-block w-1.5 h-4 bg-accent animate-pulse ml-0.5 align-text-bottom rounded-sm" />
+                    )}
+                  </>
+                )}
 
-                {msg.pending && msg.confirmed === undefined && (
+                {msg.role === "assistant" && !msg.streaming && msg.text && !msg.pending && (
+                  <CopyButton text={msg.text} />
+                )}
+
+                {msg.pending && !msg.streaming && msg.confirmed === undefined && (
                   <div className="flex gap-2 mt-3 pt-2.5 border-t border-border/30">
                     <button
                       onClick={() => handleConfirm(i, true)}
@@ -203,7 +340,7 @@ function AIPanel({ onClose }: { onClose: () => void }) {
             </div>
           ))}
 
-          {loading && (
+          {loading && messages[messages.length - 1]?.role !== "assistant" && (
             <div className="flex justify-start">
               <div className="rounded-2xl rounded-bl-md bg-surface px-4 py-3">
                 <Loader2 className="h-4 w-4 animate-spin text-muted" />
