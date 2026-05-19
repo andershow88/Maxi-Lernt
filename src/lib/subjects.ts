@@ -1,0 +1,15 @@
+export const DEFAULT_SUBJECTS = [
+  { name: "Deutsch", icon: "BookOpen", color: "#ef4444", order: 1 },
+  { name: "Mathematik", icon: "Calculator", color: "#3b82f6", order: 2 },
+  { name: "Englisch", icon: "Globe", color: "#8b5cf6", order: 3 },
+  { name: "Chemie", icon: "FlaskConical", color: "#10b981", order: 4 },
+  { name: "Physik", icon: "Atom", color: "#f59e0b", order: 5 },
+  { name: "Geschichte", icon: "Landmark", color: "#b45309", order: 6 },
+  { name: "Geographie", icon: "MapPin", color: "#0d9488", order: 7 },
+  { name: "Sport", icon: "Dumbbell", color: "#ec4899", order: 8 },
+  { name: "Wirtschaft", icon: "TrendingUp", color: "#6366f1", order: 9 },
+  { name: "Politik", icon: "Scale", color: "#64748b", order: 10 },
+  { name: "Religion", icon: "Heart", color: "#a855f7", order: 11 },
+  { name: "IT", icon: "Monitor", color: "#06b6d4", order: 12 },
+  { name: "Musik", icon: "Music", color: "#f43f5e", order: 13 },
+] as const;

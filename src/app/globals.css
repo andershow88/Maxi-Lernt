@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f5f7fa;
+  --bg-elevated: #ffffff;
+  --surface: #edf0f5;
+  --surface-2: #e2e6ed;
+  --border: #d1d5dc;
+  --border-strong: #9ca3af;
+  --foreground: #111827;
+  --muted: #6b7280;
+  --subtle: #9ca3af;
+  --glass-from: rgba(255, 255, 255, 0.82);
+  --glass-to: rgba(248, 250, 252, 0.9);
+  --glass-border: rgba(99, 102, 241, 0.2);
+  --selection-bg: #4f46e5;
+  --selection-fg: #ffffff;
+  --body-gradient-a: rgba(79, 70, 229, 0.04);
+  --body-gradient-b: rgba(99, 102, 241, 0.03);
+  --body-gradient-base-start: #f5f7fa;
+  --body-gradient-base-end: #eef1f6;
+  --shadow-card: rgba(0, 0, 0, 0.08);
+  --ring-glow: rgba(79, 70, 229, 0.25);
+  --accent: #4f46e5;
+  --accent-2: #4338ca;
+  --accent-light: #818cf8;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --grade-1: #10b981;
+  --grade-2: #34d399;
+  --grade-3: #fbbf24;
+  --grade-4: #f97316;
+  --grade-5: #ef4444;
+  --grade-6: #dc2626;
+}
+
+[data-theme="dark"] {
+  --bg: #0f1117;
+  --bg-elevated: #1a1d27;
+  --surface: #222533;
+  --surface-2: #2d3142;
+  --border: #3d4155;
+  --border-strong: #6366f1;
+  --foreground: #f1f5f9;
+  --muted: #94a3b8;
+  --subtle: #64748b;
+  --glass-from: rgba(34, 37, 51, 0.7);
+  --glass-to: rgba(26, 29, 39, 0.8);
+  --glass-border: rgba(99, 102, 241, 0.3);
+  --selection-bg: #6366f1;
+  --selection-fg: #ffffff;
+  --body-gradient-a: rgba(99, 102, 241, 0.08);
+  --body-gradient-b: rgba(79, 70, 229, 0.06);
+  --body-gradient-base-start: #0f1117;
+  --body-gradient-base-end: #0a0c12;
+  --shadow-card: rgba(0, 0, 0, 0.4);
+  --ring-glow: rgba(99, 102, 241, 0.35);
+  --accent: #818cf8;
+  --accent-2: #6366f1;
+  --accent-light: #a5b4fc;
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-light: var(--accent-light);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-grade-1: var(--grade-1);
+  --color-grade-2: var(--grade-2);
+  --color-grade-3: var(--grade-3);
+  --color-grade-4: var(--grade-4);
+  --color-grade-5: var(--grade-5);
+  --color-grade-6: var(--grade-6);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@layer base {
+  html, body {
+    background-color: var(--bg);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    font-family: var(--font-sans);
+    background-image:
+      radial-gradient(60rem 40rem at 80% -10%, var(--body-gradient-a), transparent 60%),
+      radial-gradient(50rem 35rem at -10% 10%, var(--body-gradient-b), transparent 55%),
+      linear-gradient(180deg, var(--body-gradient-base-start) 0%, var(--body-gradient-base-end) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  ::selection {
+    background: var(--selection-bg);
+    color: var(--selection-fg);
+  }
+}
+
+@layer components {
+  .glass {
+    background: linear-gradient(180deg, var(--glass-from), var(--glass-to));
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+  }
+  .ring-accent {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--accent) 30%, transparent),
+      0 8px 30px -10px var(--ring-glow);
+  }
+  .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out both;
+}

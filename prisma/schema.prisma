@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String   @default("BookOpen")
+  color     String   @default("#4F46E5")
+  order     Int      @default(0)
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grades Grade[]
+  events CalendarEvent[]
+}
+
+model Grade {
+  id        String    @id @default(cuid())
+  subjectId String
+  subject   Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  value     Float
+  weight    Float     @default(1)
+  type      GradeType
+  date      DateTime  @default(now())
+  note      String?
+  createdAt DateTime  @default(now())
+
+  @@index([subjectId])
+}
+
+enum GradeType {
+  SCHULAUFGABE
+  EX
+  MUENDLICH
+  SONSTIGE
+}
+
+model CalendarEvent {
+  id                 String    @id @default(cuid())
+  subjectId          String?
+  subject            Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  title              String
+  date               DateTime
+  time               String?
+  type               EventType
+  note               String?
+  studyStartDate     DateTime?
+  studyMinutesPerDay Int?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  studyDays StudyDay[]
+
+  @@index([date])
+  @@index([subjectId])
+}
+
+enum EventType {
+  SCHULAUFGABE
+  EX
+  TEST
+  REFERAT
+  HAUSAUFGABE
+  LERNTERMIN
+  SONSTIGER
+}
+
+model StudyDay {
+  id          String        @id @default(cuid())
+  eventId     String
+  event       CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  date        DateTime
+  completed   Boolean       @default(false)
+  completedAt DateTime?
+
+  @@unique([eventId, date])
+  @@index([date])
+}
+
+model SavedTerm {
+  id          String   @id @default(cuid())
+  term        String
+  explanation String?  @db.Text
+  translation String?
+  category    String   @default("Sonstiges")
+  favorite    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Settings {
+  id            String @id @default("default")
+  decimalPlaces Int    @default(1)
+  sortOrder     String @default("best")
+  theme         String @default("light")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
