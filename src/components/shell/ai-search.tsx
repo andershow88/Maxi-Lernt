@@ -97,11 +97,17 @@ function AIPanel({ onClose }: { onClose: () => void }) {
       .map((m) => ({ role: m.role, content: m.text }));
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000);
+
       const res = await fetch("/api/ai/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg, history }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       if (!res.ok) {
         const data = await res.json();
@@ -202,8 +208,9 @@ function AIPanel({ onClose }: { onClose: () => void }) {
             : m,
         ),
       );
-    } catch {
-      setMessages((prev) => [...prev, { role: "assistant", text: "Verbindungsfehler." }]);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      setMessages((prev) => [...prev, { role: "assistant", text: `Verbindungsfehler: ${detail}` }]);
     } finally {
       setLoading(false);
     }
