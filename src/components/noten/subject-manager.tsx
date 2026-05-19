@@ -35,20 +35,20 @@ export function SubjectManager({ subjects: initial }: { subjects: Subject[] }) {
 
   function handleToggle(id: string) {
     setSubjects((prev) => prev.map((s) => s.id === id ? { ...s, hidden: !s.hidden } : s));
-    startTransition(() => toggleSubjectVisibility(id));
+    startTransition(() => { toggleSubjectVisibility(id); });
   }
 
   function handleDelete(id: string) {
     if (!confirm("Fach und alle Noten wirklich löschen?")) return;
     setSubjects((prev) => prev.filter((s) => s.id !== id));
-    startTransition(() => deleteSubjectAction(id));
+    startTransition(() => { deleteSubjectAction(id); });
   }
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         {subjects.map((s) => {
-          const IconComponent = (Icons as Record<string, React.ComponentType<{ className?: string }>>)[s.icon] ?? Icons.BookOpen;
+          const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[s.icon] ?? Icons.BookOpen;
           return (
             <Card key={s.id} className={cn(s.hidden && "opacity-50")}>
               <CardContent className="p-3 flex items-center gap-3">

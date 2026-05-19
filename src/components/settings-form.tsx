@@ -33,7 +33,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
             {DECIMAL_OPTIONS.map((o) => (
               <button
                 key={o.value}
-                onClick={() => startTransition(() => updateDecimalPlaces(o.value))}
+                onClick={() => startTransition(() => { updateDecimalPlaces(o.value); })}
                 className={cn(
                   "flex flex-col items-center gap-1 rounded-xl border py-3 text-sm transition cursor-pointer",
                   settings.decimalPlaces === o.value
@@ -56,7 +56,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
             {SORT_OPTIONS.map((o) => (
               <button
                 key={o.value}
-                onClick={() => startTransition(() => updateSortOrder(o.value))}
+                onClick={() => startTransition(() => { updateSortOrder(o.value); })}
                 className={cn(
                   "flex items-center w-full rounded-xl border px-4 py-2.5 text-sm transition cursor-pointer",
                   settings.sortOrder === o.value

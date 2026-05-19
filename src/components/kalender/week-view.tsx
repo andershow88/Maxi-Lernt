@@ -192,7 +192,7 @@ function StudyDayToggle({ studyDay }: { studyDay: StudyDayData }) {
 
   function toggle() {
     setCompleted(!completed);
-    startTransition(() => toggleStudyDayAction(studyDay.id));
+    startTransition(() => { toggleStudyDayAction(studyDay.id); });
   }
 
   return (

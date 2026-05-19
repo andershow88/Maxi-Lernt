@@ -38,12 +38,12 @@ export function SavedTermsList({
 
   function toggleFav(id: string) {
     setTerms((prev) => prev.map((t) => t.id === id ? { ...t, favorite: !t.favorite } : t));
-    startTransition(() => toggleFavoriteAction(id));
+    startTransition(() => { toggleFavoriteAction(id); });
   }
 
   function remove(id: string) {
     setTerms((prev) => prev.filter((t) => t.id !== id));
-    startTransition(() => deleteTermAction(id));
+    startTransition(() => { deleteTermAction(id); });
   }
 
   return (

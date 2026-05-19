@@ -19,7 +19,7 @@ export function SortSelect({ current }: { current: string }) {
       <ArrowUpDown className="h-3.5 w-3.5 text-muted" />
       <select
         defaultValue={current}
-        onChange={(e) => startTransition(() => updateSortOrder(e.target.value))}
+        onChange={(e) => startTransition(() => { updateSortOrder(e.target.value); })}
         className="bg-transparent text-xs font-medium text-muted border-none focus:outline-none cursor-pointer"
       >
         {OPTIONS.map((o) => (

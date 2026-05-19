@@ -21,7 +21,7 @@ export function GradeCircle({
     <div className="flex flex-col items-center gap-1">
       <div
         className={`${dims[size]} grid place-items-center rounded-full font-bold ring-2 transition-all`}
-        style={{ color, borderColor: color, ringColor: `${color}33` }}
+        style={{ color, borderColor: color, outlineColor: `${color}33` } as React.CSSProperties}
       >
         {display}
       </div>

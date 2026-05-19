@@ -20,7 +20,7 @@ export function SubjectCard({
 }) {
   const avg = calculateWeightedAverage(grades.map((g) => ({ value: g.value, weight: g.weight })));
   const hint = avg !== null ? getImprovementHint(avg, grades.map((g) => ({ value: g.value, weight: g.weight }))) : null;
-  const IconComponent = (Icons as Record<string, React.ComponentType<{ className?: string }>>)[subject.icon] ?? Icons.BookOpen;
+  const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[subject.icon] ?? Icons.BookOpen;
 
   return (
     <div className="rounded-2xl border border-border/60 bg-bg-elevated overflow-hidden transition-shadow hover:shadow-md">
