@@ -1,11 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { GraduationCap, Settings, Brain, BookOpen } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { GraduationCap, Settings, Brain, BookOpen, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AISearch } from "./ai-search";
 
 export function Topbar() {
+  const router = useRouter();
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-bg-elevated/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
@@ -43,6 +52,13 @@ export function Topbar() {
             <Settings className="h-4.5 w-4.5" />
           </Link>
           <ThemeToggle />
+          <button
+            onClick={handleLogout}
+            className="grid h-9 w-9 place-items-center rounded-xl text-muted hover:bg-red-50 hover:text-red-500 transition cursor-pointer"
+            title="Abmelden"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </header>
