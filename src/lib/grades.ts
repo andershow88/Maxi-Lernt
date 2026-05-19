@@ -14,68 +14,15 @@ export function calculateOverallAverage(subjectAverages: (number | null)[]): num
   return valid.reduce((sum, a) => sum + a, 0) / valid.length;
 }
 
-export function getImprovementHint(
-  currentAvg: number,
-  grades: GradeEntry[],
-): { targetGrade: number; neededGrade: number; message: string } | null {
-  if (grades.length === 0) return null;
-
-  // Zeugnisnote: 1.00–1.49 → 1, 1.50–2.49 → 2, etc.
-  const zeugnisNote = currentAvg < 1.5 ? 1 : Math.round(currentAvg);
-  const targetGrade = zeugnisNote - 1;
-  if (targetGrade < 1) return null;
-
-  // Ziel-Durchschnitt: knapp unter der Rundungsgrenze
-  const targetAvg = targetGrade + 0.49;
-
-  const totalWeight = grades.reduce((sum, g) => sum + g.weight, 0);
-  const weightedSum = grades.reduce((sum, g) => sum + g.value * g.weight, 0);
-
-  // Schulaufgabe zählt 2-fach
-  const newWeight = 2;
-  const neededExact = (targetAvg * (totalWeight + newWeight) - weightedSum) / newWeight;
-
-  // Nur ganze oder halbe Noten möglich (1, 1.5, 2, ..., 6)
-  const neededGrade = Math.ceil(neededExact);
-
-  // Gegenprobe: ergibt die gerundete Note tatsächlich den Zielschnitt?
-  const newAvg = (weightedSum + neededGrade * newWeight) / (totalWeight + newWeight);
-  if (neededGrade < 1 || neededGrade > 6 || newAvg > targetAvg + 0.005) {
-    if (neededExact < 1) {
-      return {
-        targetGrade,
-        neededGrade: 1,
-        message: `Super! Eine 1 in der nächsten Schulaufgabe bringt dich auf die ${targetGrade}.`,
-      };
-    }
-    return {
-      targetGrade,
-      neededGrade: zeugnisNote,
-      message: `Eine ${targetGrade} im Zeugnis ist mit einer einzelnen Prüfung nicht mehr erreichbar. Bleib dran — mit guten mündlichen Noten wird es leichter!`,
-    };
-  }
-
-  if (neededGrade <= 2) {
-    return {
-      targetGrade,
-      neededGrade,
-      message: `Mit einer ${neededGrade} in der nächsten Schulaufgabe kannst du deinen Schnitt auf eine ${targetGrade} verbessern!`,
-    };
-  }
-
-  if (neededGrade <= 3) {
-    return {
-      targetGrade,
-      neededGrade,
-      message: `Du bist nah an der besseren Note! Eine ${neededGrade} in der nächsten Prüfung reicht.`,
-    };
-  }
-
-  return {
-    targetGrade,
-    neededGrade,
-    message: `Hier lohnt es sich, regelmäßig kurz zu üben. Eine ${neededGrade} bringt dich weiter.`,
-  };
+export function getMotivationHint(currentAvg: number): string | null {
+  if (currentAvg <= 1.5) return "Läuft bei dir! Absolut stark.";
+  if (currentAvg <= 2.0) return "Richtig gut, bleib am Ball!";
+  if (currentAvg <= 2.5) return "Sauber! Da steckt noch mehr drin.";
+  if (currentAvg <= 3.0) return "Gute Basis — du kannst das!";
+  if (currentAvg <= 3.5) return "Dranbleiben lohnt sich, du packst das!";
+  if (currentAvg <= 4.0) return "Jeder Schritt zählt, weiter so!";
+  if (currentAvg <= 4.5) return "Kopf hoch — mit Übung geht's bergauf!";
+  return "Nicht aufgeben, jede Verbesserung zählt!";
 }
 
 export function getMotivationalMessage(avg: number | null): string {

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { GradeCircle } from "./grade-circle";
-import { ImprovementHint } from "./improvement-hint";
-import { calculateWeightedAverage, getImprovementHint } from "@/lib/grades";
+import { MotivationHint } from "./improvement-hint";
+import { calculateWeightedAverage, getMotivationHint } from "@/lib/grades";
 import { formatGrade, gradeTypeLabel, weightLabel } from "@/lib/utils";
 import * as Icons from "lucide-react";
 import type { Subject, Grade } from "@prisma/client";
@@ -19,7 +19,7 @@ export function SubjectCard({
   decimals: number;
 }) {
   const avg = calculateWeightedAverage(grades.map((g) => ({ value: g.value, weight: g.weight })));
-  const hint = avg !== null ? getImprovementHint(avg, grades.map((g) => ({ value: g.value, weight: g.weight }))) : null;
+  const hint = avg !== null ? getMotivationHint(avg) : null;
   const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[subject.icon] ?? Icons.BookOpen;
 
   return (
@@ -58,7 +58,7 @@ export function SubjectCard({
         </div>
       </div>
       {hint && (
-        <ImprovementHint hint={hint} />
+        <MotivationHint message={hint} />
       )}
       <div className="flex border-t border-border/40">
         <Link
