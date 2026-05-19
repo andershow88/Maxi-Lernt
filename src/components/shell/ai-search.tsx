@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, Send, Loader2, Check, XCircle, Sparkles, Copy, CheckCheck } from "lucide-react";
+import { X, Send, Loader2, Check, XCircle, Sparkles, Copy, CheckCheck, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -318,32 +318,38 @@ function AIPanel({ onClose }: { onClose: () => void }) {
                 )}
 
                 {msg.pending && !msg.streaming && msg.confirmed === undefined && (
-                  <div className="flex gap-2 mt-3 pt-2.5 border-t border-border/30">
-                    <button
-                      onClick={() => handleConfirm(i, true)}
-                      disabled={loading}
-                      className="flex items-center gap-1.5 rounded-lg bg-success/15 px-4 py-2 text-xs font-semibold text-success hover:bg-success/25 transition cursor-pointer"
-                    >
-                      <Check className="h-3.5 w-3.5" /> Ja, anlegen
-                    </button>
-                    <button
-                      onClick={() => handleConfirm(i, false)}
-                      disabled={loading}
-                      className="flex items-center gap-1.5 rounded-lg bg-danger/15 px-4 py-2 text-xs font-semibold text-danger hover:bg-danger/25 transition cursor-pointer"
-                    >
-                      <XCircle className="h-3.5 w-3.5" /> Nein
-                    </button>
+                  <div className="mt-3 rounded-xl border-2 border-amber-400/60 bg-amber-50/10 p-3 space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-amber-500 text-xs font-bold">
+                      <Zap className="h-3.5 w-3.5" /> Aktion bestätigen
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleConfirm(i, true)}
+                        disabled={loading}
+                        className="flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-xs font-semibold text-white hover:bg-green-700 transition cursor-pointer"
+                      >
+                        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                        Ja, ausführen
+                      </button>
+                      <button
+                        onClick={() => handleConfirm(i, false)}
+                        disabled={loading}
+                        className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-xs font-semibold text-muted hover:text-foreground hover:bg-surface transition cursor-pointer"
+                      >
+                        Abbrechen
+                      </button>
+                    </div>
                   </div>
                 )}
 
                 {msg.confirmed === true && (
-                  <div className="flex items-center gap-1 mt-2 text-xs text-success">
-                    <Check className="h-3 w-3" /> Bestätigt
+                  <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-green-600/10 px-3 py-1.5 text-xs font-semibold text-green-600 w-fit">
+                    <Check className="h-3.5 w-3.5" /> Ausgeführt
                   </div>
                 )}
                 {msg.confirmed === false && (
-                  <div className="flex items-center gap-1 mt-2 text-xs text-danger">
-                    <XCircle className="h-3 w-3" /> Abgebrochen
+                  <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-xs text-muted w-fit">
+                    <XCircle className="h-3.5 w-3.5" /> Abgebrochen
                   </div>
                 )}
               </div>
