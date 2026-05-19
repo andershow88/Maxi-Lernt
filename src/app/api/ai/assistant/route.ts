@@ -225,8 +225,14 @@ function sseStream(openai: OpenAI, messages: Msg[], prefix?: object) {
   });
 }
 
+const HistoryMsg = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+});
+
 const RequestSchema = z.object({
   message: z.string().min(1).max(1000),
+  history: z.array(HistoryMsg).optional(),
   confirm: z.object({
     action: z.string(),
     data: z.record(z.unknown()),
@@ -243,7 +249,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { message, confirm } = RequestSchema.parse(body);
+  const { message, history, confirm } = RequestSchema.parse(body);
 
   if (confirm) {
     try {
@@ -267,6 +273,7 @@ export async function POST(req: Request) {
   try {
     const messages: Msg[] = [
       { role: "system", content: systemPrompt },
+      ...(history ?? []).slice(-10).map((h) => ({ role: h.role as "user" | "assistant", content: h.content })),
       { role: "user", content: message },
     ];
 

@@ -89,14 +89,18 @@ function AIPanel({ onClose }: { onClose: () => void }) {
     };
   }, [onClose]);
 
-  const streamResponse = useCallback(async (userMsg: string) => {
+  const streamResponse = useCallback(async (userMsg: string, currentMessages: Message[]) => {
     setLoading(true);
+
+    const history = currentMessages
+      .filter((m) => m.text && !m.streaming)
+      .map((m) => ({ role: m.role, content: m.text }));
 
     try {
       const res = await fetch("/api/ai/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg }),
+        body: JSON.stringify({ message: userMsg, history }),
       });
 
       if (!res.ok) {
@@ -211,8 +215,9 @@ function AIPanel({ onClose }: { onClose: () => void }) {
 
     const userMsg = query.trim();
     setQuery("");
-    setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
-    await streamResponse(userMsg);
+    const prevMessages = [...messages, { role: "user" as const, text: userMsg }];
+    setMessages(prevMessages);
+    await streamResponse(userMsg, messages);
   }
 
   async function handleConfirm(msgIndex: number, confirmed: boolean) {
