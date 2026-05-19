@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Sparkles, Loader2, Brain, ClipboardCheck, RotateCcw, ChevronDown, Check } from "lucide-react";
-import * as Icons from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Loader2, Brain, ClipboardCheck, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SubjectPicker } from "@/components/ui/subject-picker";
 import { LessonDisplay } from "./lesson-display";
 import { QuizCard } from "./quiz-card";
-import { cn } from "@/lib/utils";
 
 type SubjectOption = { id: string; name: string; icon?: string; color?: string };
 
@@ -30,78 +29,6 @@ type Quiz = {
   }[];
 };
 
-function SubjectPicker({ subjects, value, onChange }: { subjects: SubjectOption[]; value: string; onChange: (v: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const selected = subjects.find((s) => s.name === value);
-
-  useEffect(() => {
-    if (!open) return;
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [open]);
-
-  function getIcon(iconName?: string) {
-    const Comp = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[iconName ?? "BookOpen"] ?? Icons.BookOpen;
-    return Comp;
-  }
-
-  return (
-    <div ref={ref} className="relative">
-      <label className="block text-sm font-medium text-foreground mb-1.5">Fach</label>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "w-full flex items-center gap-3 rounded-xl border bg-bg-elevated px-4 py-3 text-sm transition cursor-pointer",
-          open ? "border-accent ring-2 ring-accent/20" : "border-border hover:border-accent/40",
-        )}
-      >
-        {selected ? (
-          <>
-            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg" style={{ backgroundColor: `${selected.color ?? '#4f46e5'}18`, color: selected.color ?? '#4f46e5' }}>
-              {(() => { const I = getIcon(selected.icon); return <I className="h-4 w-4" />; })()}
-            </div>
-            <span className="text-foreground font-medium">{selected.name}</span>
-          </>
-        ) : (
-          <span className="text-subtle">Fach wählen...</span>
-        )}
-        <ChevronDown className={cn("ml-auto h-4 w-4 text-muted transition", open && "rotate-180")} />
-      </button>
-
-      {open && (
-        <div className="absolute z-30 mt-1.5 w-full rounded-xl border border-border bg-bg-elevated shadow-xl overflow-hidden max-h-64 overflow-y-auto">
-          {subjects.map((s) => {
-            const I = getIcon(s.icon);
-            const isSelected = s.name === value;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => { onChange(s.name); setOpen(false); }}
-                className={cn(
-                  "w-full flex items-center gap-3 px-4 py-2.5 text-sm transition cursor-pointer",
-                  isSelected ? "bg-accent/10 text-accent" : "text-foreground hover:bg-surface",
-                )}
-              >
-                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg" style={{ backgroundColor: `${s.color ?? '#4f46e5'}18`, color: s.color ?? '#4f46e5' }}>
-                  <I className="h-4 w-4" />
-                </div>
-                <span className="font-medium">{s.name}</span>
-                {isSelected && <Check className="ml-auto h-4 w-4" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function CoachForm({ subjects }: { subjects: SubjectOption[] }) {
   const [subject, setSubject] = useState("");
   const [topic, setTopic] = useState("");
@@ -123,7 +50,7 @@ export function CoachForm({ subjects }: { subjects: SubjectOption[] }) {
       const res = await fetch("/api/ai/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, topic: topic.trim(), mode: "learn" }),
+        body: JSON.stringify({ subject: subjectName, topic: topic.trim(), mode: "learn" }),
       });
 
       const data = await res.json();
@@ -152,7 +79,7 @@ export function CoachForm({ subjects }: { subjects: SubjectOption[] }) {
       const res = await fetch("/api/ai/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, topic: topic.trim(), mode: "quiz" }),
+        body: JSON.stringify({ subject: subjectName, topic: topic.trim(), mode: "quiz" }),
       });
 
       const data = await res.json();
@@ -177,7 +104,7 @@ export function CoachForm({ subjects }: { subjects: SubjectOption[] }) {
     setError(null);
   }
 
-  const subjectName = subjects.find((s) => s.id === subject)?.name ?? subject;
+  const subjectName = subjects.find((s) => s.id === subject || s.name === subject)?.name ?? subject;
 
   return (
     <div className="space-y-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Play, Square, Clock } from "lucide-react";
+import { Play, Square, Clock, Check } from "lucide-react";
 import * as Icons from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,12 +41,17 @@ export function StudyTimer({ stats }: { stats: Stats }) {
   const [selectedId, setSelectedId] = useState("");
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const elapsedRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [saved, setSaved] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     if (running) {
-      intervalRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+      intervalRef.current = setInterval(() => {
+        elapsedRef.current += 1;
+        setElapsed(elapsedRef.current);
+      }, 1000);
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -54,13 +59,18 @@ export function StudyTimer({ stats }: { stats: Stats }) {
   }, [running]);
 
   async function handleStop() {
+    if (intervalRef.current) clearInterval(intervalRef.current);
     setRunning(false);
-    const minutes = Math.max(1, Math.round(elapsed / 60));
-    if (selectedId && elapsed > 30) {
+    const secs = elapsedRef.current;
+    const minutes = Math.max(1, Math.round(secs / 60));
+    if (selectedId && secs >= 10) {
       await createStudySession(selectedId, minutes);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
       router.refresh();
     }
     setElapsed(0);
+    elapsedRef.current = 0;
   }
 
   const maxWeek = Math.max(1, ...stats.subjects.map((s) => s.weekMinutes));
@@ -96,7 +106,7 @@ export function StudyTimer({ stats }: { stats: Stats }) {
 
           <div className="flex gap-3">
             {!running ? (
-              <Button onClick={() => setRunning(true)} disabled={!selectedId} className="flex-1">
+              <Button onClick={() => { elapsedRef.current = 0; setElapsed(0); setRunning(true); }} disabled={!selectedId} className="flex-1">
                 <Play className="h-4 w-4" /> Starten
               </Button>
             ) : (
@@ -105,6 +115,12 @@ export function StudyTimer({ stats }: { stats: Stats }) {
               </Button>
             )}
           </div>
+
+          {saved && (
+            <div className="flex items-center justify-center gap-1.5 rounded-xl bg-green-50 border border-green-200 py-2 text-xs font-semibold text-green-600">
+              <Check className="h-3.5 w-3.5" /> Lernzeit gespeichert!
+            </div>
+          )}
         </CardContent>
       </Card>
 

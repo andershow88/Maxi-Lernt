@@ -25,7 +25,7 @@ export default async function KarteikartenPage() {
       <FlashcardView
         dueCards={due.map((c) => ({ id: c.id, front: c.front, back: c.back, level: c.level, subjectName: c.subject?.name ?? null }))}
         totalCount={all.length}
-        subjects={subjects.map((s) => ({ id: s.id, name: s.name }))}
+        subjects={subjects.map((s) => ({ id: s.id, name: s.name, icon: s.icon, color: s.color }))}
       />
     </div>
   );

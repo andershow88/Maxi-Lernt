@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Plus, RotateCcw, Check, X, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SubjectPicker } from "@/components/ui/subject-picker";
 import { createFlashcard, reviewFlashcard } from "@/server/flashcard-actions";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,7 @@ type FlashcardData = {
   subjectName: string | null;
 };
 
-type SubjectOption = { id: string; name: string };
+type SubjectOption = { id: string; name: string; icon?: string; color?: string };
 
 export function FlashcardView({
   dueCards,
@@ -166,19 +167,15 @@ export function FlashcardView({
       {/* Add mode */}
       {mode === "add" && (
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Fach (optional)</label>
-            <select
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
-              className="w-full rounded-xl border border-border bg-bg-elevated px-4 py-2.5 text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
-            >
-              <option value="">Kein Fach</option>
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
+          <SubjectPicker
+            subjects={subjects}
+            value={subjectId}
+            onChange={setSubjectId}
+            label="Fach (optional)"
+            placeholder="Kein Fach gewählt"
+            allowEmpty
+            emptyLabel="Kein Fach"
+          />
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">Vorderseite (Frage)</label>
