@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 1200,
+      max_completion_tokens: 1200,
       temperature: 0.7,
       response_format: { type: "json_object" },
     });

@@ -233,7 +233,7 @@ export async function POST(req: Request) {
       model: "gpt-5.4-mini-2026-03-17",
       messages,
       tools,
-      max_tokens: 800,
+      max_completion_tokens: 800,
       temperature: 0.5,
     });
 
@@ -262,7 +262,7 @@ export async function POST(req: Request) {
           const descCompletion = await openai.chat.completions.create({
             model: "gpt-5.4-mini-2026-03-17",
             messages,
-            max_tokens: 300,
+            max_completion_tokens: 300,
             temperature: 0.3,
           });
 
@@ -284,7 +284,7 @@ export async function POST(req: Request) {
         model: "gpt-5.4-mini-2026-03-17",
         messages,
         tools,
-        max_tokens: 800,
+        max_completion_tokens: 800,
         temperature: 0.5,
       });
       choice = completion.choices[0];
