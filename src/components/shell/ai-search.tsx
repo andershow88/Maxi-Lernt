@@ -384,7 +384,7 @@ function AIPanel({ onClose }: { onClose: () => void }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Frage oder Anweisung eingeben..."
-            className="flex-1 rounded-xl border border-border bg-bg px-4 py-3 text-sm text-foreground placeholder:text-subtle focus:border-accent focus:outline-none"
+            className="flex-1 rounded-xl border border-border bg-bg px-4 py-3 text-base sm:text-sm text-foreground placeholder:text-subtle focus:border-accent focus:outline-none"
           />
           <button
             type="submit"

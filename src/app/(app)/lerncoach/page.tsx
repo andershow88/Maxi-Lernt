@@ -13,7 +13,7 @@ export default async function LerncoachPage() {
         title="KI-Lerncoach"
         description="Wähle ein Fach und Thema — dein persönlicher Lernassistent hilft dir."
       />
-      <CoachForm subjects={subjects.map((s) => ({ id: s.id, name: s.name }))} />
+      <CoachForm subjects={subjects.map((s) => ({ id: s.id, name: s.name, icon: s.icon, color: s.color }))} />
     </div>
   );
 }
