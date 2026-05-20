@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { jwtVerify, SignJWT } from "jose";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "maxi-lernt-secret-key-2026");
@@ -25,13 +26,26 @@ export async function getSession(): Promise<SessionUser | null> {
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSession();
+  if (!user) redirect("/login");
+  return user;
+}
+
+export async function requireUserForAction(): Promise<SessionUser> {
+  const user = await getSession();
   if (!user) throw new Error("Not authenticated");
   return user;
 }
 
 export async function requireAdmin(): Promise<SessionUser> {
-  const user = await requireUser();
-  if (user.role !== "ADMIN") throw new Error("Not authorized");
+  const user = await getSession();
+  if (!user) redirect("/login");
+  if (user.role !== "ADMIN") redirect("/");
+  return user;
+}
+
+export async function requireAdminForAction(): Promise<SessionUser> {
+  const user = await getSession();
+  if (!user || user.role !== "ADMIN") throw new Error("Not authorized");
   return user;
 }
 
