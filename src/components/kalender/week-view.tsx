@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { ChevronLeft, ChevronRight, Plus, Check, Circle, Calendar, Clock, FileText, Trash2, ChevronDown, MapPin } from "lucide-react";
-import { format, addWeeks, startOfWeek, addDays, isSameDay, isToday, isPast } from "date-fns";
+import { ChevronLeft, ChevronRight, Plus, Check, Circle, Calendar, Clock, FileText, Trash2, ChevronDown } from "lucide-react";
+import { format, addWeeks, startOfWeek, addDays, isToday, isPast } from "date-fns";
 import { de } from "date-fns/locale";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -56,7 +56,9 @@ export function WeekView() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/kalender?week=${weekStart.toISOString()}`)
+    const start = format(days[0], "yyyy-MM-dd") + "T00:00:00.000Z";
+    const end = format(days[6], "yyyy-MM-dd") + "T23:59:59.999Z";
+    fetch(`/api/kalender?start=${start}&end=${end}`)
       .then((r) => r.json())
       .then((data) => {
         setEvents(data.events ?? []);
@@ -113,8 +115,9 @@ export function WeekView() {
       ) : (
         <div className="space-y-2">
           {days.map((day) => {
-            const dayEvents = events.filter((e) => isSameDay(new Date(e.date), day));
-            const dayStudy = studyDays.filter((s) => isSameDay(new Date(s.date), day));
+            const dayStr = format(day, "yyyy-MM-dd");
+            const dayEvents = events.filter((e) => e.date.slice(0, 10) === dayStr);
+            const dayStudy = studyDays.filter((s) => s.date.slice(0, 10) === dayStr);
             const today = isToday(day);
             const past = isPast(addDays(day, 1)) && !today;
 
