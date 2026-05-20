@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { addDays, differenceInDays } from "date-fns";
@@ -17,6 +18,7 @@ const EventSchema = z.object({
 });
 
 export async function createEventAction(formData: FormData) {
+  const user = await requireUser();
   const raw = {
     subjectId: formData.get("subjectId"),
     title: formData.get("title"),
@@ -30,7 +32,7 @@ export async function createEventAction(formData: FormData) {
 
   const data = EventSchema.parse(raw);
 
-  const event = await prisma.calendarEvent.create({ data });
+  const event = await prisma.calendarEvent.create({ data: { ...data, userId: user.id } });
 
   if (data.studyStartDate && data.date) {
     const days = differenceInDays(data.date, data.studyStartDate);
@@ -49,13 +51,17 @@ export async function createEventAction(formData: FormData) {
 }
 
 export async function deleteEventAction(id: string) {
-  await prisma.calendarEvent.delete({ where: { id } });
+  const user = await requireUser();
+  await prisma.calendarEvent.delete({ where: { id, userId: user.id } });
   revalidatePath("/kalender");
   return { ok: true };
 }
 
 export async function toggleStudyDayAction(id: string) {
-  const day = await prisma.studyDay.findUnique({ where: { id } });
+  const user = await requireUser();
+  const day = await prisma.studyDay.findFirst({
+    where: { id, event: { userId: user.id } },
+  });
   if (!day) return { ok: false };
 
   await prisma.studyDay.update({

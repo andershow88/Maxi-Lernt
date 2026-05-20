@@ -2,14 +2,14 @@ import type { ReactNode } from "react";
 import { Topbar } from "./topbar";
 import { BottomNav } from "./bottom-nav";
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, role }: { children: ReactNode; role: string }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <Topbar />
+      <Topbar role={role} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-6">
         {children}
       </main>
-      <BottomNav />
+      <BottomNav role={role} />
     </div>
   );
 }

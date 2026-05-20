@@ -4,13 +4,15 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SavedTermsList } from "@/components/erklaerer/saved-terms-list";
 import { listSavedTerms, getTermCategories } from "@/server/term-queries";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function VerlaufPage() {
+  const user = await requireUser();
   const [terms, categories] = await Promise.all([
-    listSavedTerms(),
-    getTermCategories(),
+    listSavedTerms(user.id),
+    getTermCategories(user.id),
   ]);
 
   return (

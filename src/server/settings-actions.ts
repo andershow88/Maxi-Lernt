@@ -1,24 +1,27 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export async function getSettings() {
-  let settings = await prisma.settings.findUnique({ where: { id: "default" } });
+  const user = await requireUser();
+  let settings = await prisma.settings.findUnique({ where: { userId: user.id } });
   if (!settings) {
     settings = await prisma.settings.create({
-      data: { id: "default", decimalPlaces: 1, sortOrder: "best", theme: "light" },
+      data: { userId: user.id, decimalPlaces: 1, sortOrder: "best", theme: "light" },
     });
   }
   return settings;
 }
 
 export async function updateDecimalPlaces(value: number) {
+  const user = await requireUser();
   if (![0, 1, 2].includes(value)) return { ok: false };
   await prisma.settings.upsert({
-    where: { id: "default" },
+    where: { userId: user.id },
     update: { decimalPlaces: value },
-    create: { id: "default", decimalPlaces: value },
+    create: { userId: user.id, decimalPlaces: value },
   });
   revalidatePath("/");
   revalidatePath("/einstellungen");
@@ -26,12 +29,13 @@ export async function updateDecimalPlaces(value: number) {
 }
 
 export async function updateSortOrder(value: string) {
+  const user = await requireUser();
   const allowed = ["best", "worst", "alpha", "nextExam", "improvement"];
   if (!allowed.includes(value)) return { ok: false };
   await prisma.settings.upsert({
-    where: { id: "default" },
+    where: { userId: user.id },
     update: { sortOrder: value },
-    create: { id: "default", sortOrder: value },
+    create: { userId: user.id, sortOrder: value },
   });
   revalidatePath("/");
   revalidatePath("/einstellungen");

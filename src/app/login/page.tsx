@@ -24,7 +24,8 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        router.push("/");
+        const data = await res.json();
+        router.push(data.role === "ADMIN" ? "/admin" : "/");
         router.refresh();
       } else {
         const data = await res.json();
@@ -90,6 +91,11 @@ export default function LoginPage() {
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Anmelden"}
           </button>
         </form>
+
+        <p className="text-center text-xs text-muted">
+          Noch kein Konto?{" "}
+          <a href="/registrieren" className="text-accent font-medium hover:underline">Registrieren</a>
+        </p>
       </div>
     </div>
   );
