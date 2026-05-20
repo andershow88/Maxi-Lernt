@@ -54,7 +54,7 @@ export function Topbar() {
           <ThemeToggle />
           <button
             onClick={handleLogout}
-            className="grid h-9 w-9 place-items-center rounded-xl text-muted hover:bg-red-50 hover:text-red-500 transition cursor-pointer"
+            className="grid h-9 w-9 place-items-center rounded-xl text-muted hover:bg-red-500/10 hover:text-red-500 transition cursor-pointer"
             title="Abmelden"
           >
             <LogOut className="h-4 w-4" />

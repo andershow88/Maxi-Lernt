@@ -36,13 +36,13 @@ type StudyDayData = {
 };
 
 const TYPE_STYLES: Record<string, { bg: string; border: string; dot: string }> = {
-  SCHULAUFGABE: { bg: "bg-red-50", border: "border-red-200", dot: "bg-red-500" },
-  EX: { bg: "bg-amber-50", border: "border-amber-200", dot: "bg-amber-500" },
-  TEST: { bg: "bg-orange-50", border: "border-orange-200", dot: "bg-orange-500" },
-  REFERAT: { bg: "bg-purple-50", border: "border-purple-200", dot: "bg-purple-500" },
-  HAUSAUFGABE: { bg: "bg-blue-50", border: "border-blue-200", dot: "bg-blue-500" },
-  LERNTERMIN: { bg: "bg-green-50", border: "border-green-200", dot: "bg-green-500" },
-  SONSTIGER: { bg: "bg-slate-50", border: "border-slate-200", dot: "bg-slate-400" },
+  SCHULAUFGABE: { bg: "bg-red-500/10", border: "border-red-500/30", dot: "bg-red-500" },
+  EX: { bg: "bg-amber-500/10", border: "border-amber-500/30", dot: "bg-amber-500" },
+  TEST: { bg: "bg-orange-500/10", border: "border-orange-500/30", dot: "bg-orange-500" },
+  REFERAT: { bg: "bg-purple-500/10", border: "border-purple-500/30", dot: "bg-purple-500" },
+  HAUSAUFGABE: { bg: "bg-blue-500/10", border: "border-blue-500/30", dot: "bg-blue-500" },
+  LERNTERMIN: { bg: "bg-green-500/10", border: "border-green-500/30", dot: "bg-green-500" },
+  SONSTIGER: { bg: "bg-slate-500/10", border: "border-slate-500/30", dot: "bg-slate-400" },
 };
 
 export function WeekView() {
@@ -163,6 +163,7 @@ function DayRow({
   isPast: boolean;
 }) {
   const hasContent = events.length > 0 || studyDays.length > 0;
+  const [open, setOpen] = useState(isToday && hasContent);
 
   return (
     <div className={cn(
@@ -171,14 +172,18 @@ function DayRow({
       !hasContent && isPast && "opacity-40",
       !hasContent && !isPast && "opacity-60",
     )}>
-      <div className="flex items-center gap-2 px-3 py-2">
+      <button
+        type="button"
+        onClick={() => hasContent && setOpen(!open)}
+        className={cn("w-full flex items-center gap-2 px-3 py-2 text-left", hasContent && "cursor-pointer")}
+      >
         <div className={cn(
           "grid h-9 w-9 place-items-center rounded-lg text-sm font-bold shrink-0",
           isToday ? "bg-accent text-white" : "bg-surface text-foreground",
         )}>
           {format(day, "d")}
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <span className={cn(
             "text-xs font-bold uppercase tracking-wider",
             isToday ? "text-accent" : "text-muted",
@@ -191,15 +196,35 @@ function DayRow({
           )}>
             {format(day, "d. MMMM", { locale: de })}
           </span>
+          {/* Collapsed preview */}
+          {hasContent && !open && (
+            <div className="flex items-center gap-1.5 mt-1">
+              {events.map((e) => {
+                const style = TYPE_STYLES[e.type] ?? TYPE_STYLES.SONSTIGER;
+                return <div key={e.id} className={cn("h-2 w-2 rounded-full shrink-0", style.dot)} title={e.title} />;
+              })}
+              {events.length > 0 && (
+                <span className="text-[10px] text-muted truncate">
+                  {events.map((e) => e.title).join(", ")}
+                </span>
+              )}
+              {studyDays.length > 0 && events.length === 0 && (
+                <span className="text-[10px] text-muted">{studyDays.length} Lerntag{studyDays.length > 1 ? "e" : ""}</span>
+              )}
+            </div>
+          )}
         </div>
-        {isToday && <Badge variant="accent" className="ml-auto">Heute</Badge>}
+        {isToday && <Badge variant="accent" className="shrink-0">Heute</Badge>}
         {!hasContent && !isToday && (
-          <span className="ml-auto text-[10px] text-subtle">Frei</span>
+          <span className="text-[10px] text-subtle shrink-0">Frei</span>
         )}
-      </div>
+        {hasContent && (
+          <ChevronDown className={cn("h-4 w-4 text-muted shrink-0 transition", open && "rotate-180")} />
+        )}
+      </button>
 
-      {hasContent && (
-        <div className="px-3 pb-2.5 space-y-1.5">
+      {open && hasContent && (
+        <div className="px-3 pb-2.5 space-y-1.5 border-t border-border/20 pt-2">
           {events.map((e) => (
             <EventCard key={e.id} event={e} />
           ))}
@@ -275,7 +300,7 @@ function EventCard({ event }: { event: EventData }) {
                 <span className="text-[11px] text-muted font-medium">Lernfortschritt</span>
                 <span className="text-[11px] font-semibold text-foreground">{studyDone}/{studyTotal} Tage</span>
               </div>
-              <div className="h-1.5 rounded-full bg-white/60 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-foreground/10 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-green-500 transition-all"
                   style={{ width: `${(studyDone / studyTotal) * 100}%` }}

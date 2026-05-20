@@ -9,13 +9,13 @@ import { cn } from "@/lib/utils";
 import type { Subject } from "@prisma/client";
 
 const EVENT_TYPES = [
-  { value: "SCHULAUFGABE", label: "Schulaufgabe", color: "border-red-200 bg-red-50 text-red-700 peer-checked:border-red-400 peer-checked:bg-red-100" },
-  { value: "EX", label: "Ex", color: "border-amber-200 bg-amber-50 text-amber-700 peer-checked:border-amber-400 peer-checked:bg-amber-100" },
-  { value: "TEST", label: "Test", color: "border-orange-200 bg-orange-50 text-orange-700 peer-checked:border-orange-400 peer-checked:bg-orange-100" },
-  { value: "REFERAT", label: "Referat", color: "border-purple-200 bg-purple-50 text-purple-700 peer-checked:border-purple-400 peer-checked:bg-purple-100" },
-  { value: "HAUSAUFGABE", label: "Hausaufgabe", color: "border-blue-200 bg-blue-50 text-blue-700 peer-checked:border-blue-400 peer-checked:bg-blue-100" },
-  { value: "LERNTERMIN", label: "Lerntermin", color: "border-green-200 bg-green-50 text-green-700 peer-checked:border-green-400 peer-checked:bg-green-100" },
-  { value: "SONSTIGER", label: "Sonstiger", color: "border-slate-200 bg-slate-50 text-slate-600 peer-checked:border-slate-400 peer-checked:bg-slate-100" },
+  { value: "SCHULAUFGABE", label: "Schulaufgabe", color: "border-red-500/30 bg-red-500/10 text-red-500 peer-checked:border-red-500/60 peer-checked:bg-red-500/15" },
+  { value: "EX", label: "Ex", color: "border-amber-500/30 bg-amber-500/10 text-amber-500 peer-checked:border-amber-500/60 peer-checked:bg-amber-500/15" },
+  { value: "TEST", label: "Test", color: "border-orange-500/30 bg-orange-500/10 text-orange-500 peer-checked:border-orange-500/60 peer-checked:bg-orange-500/15" },
+  { value: "REFERAT", label: "Referat", color: "border-purple-500/30 bg-purple-500/10 text-purple-500 peer-checked:border-purple-500/60 peer-checked:bg-purple-500/15" },
+  { value: "HAUSAUFGABE", label: "Hausaufgabe", color: "border-blue-500/30 bg-blue-500/10 text-blue-500 peer-checked:border-blue-500/60 peer-checked:bg-blue-500/15" },
+  { value: "LERNTERMIN", label: "Lerntermin", color: "border-green-500/30 bg-green-500/10 text-green-500 peer-checked:border-green-500/60 peer-checked:bg-green-500/15" },
+  { value: "SONSTIGER", label: "Sonstiger", color: "border-slate-500/30 bg-slate-500/10 text-slate-400 peer-checked:border-slate-500/60 peer-checked:bg-slate-500/15" },
 ];
 
 export function EventForm({ subjects }: { subjects: Subject[] }) {
