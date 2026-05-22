@@ -40,7 +40,15 @@ async function main() {
   });
   console.log("Einladungscode: 9A-2026");
 
-  // Create subjects for Maxi
+  // Assign any orphan data to Maxi (one-time migration)
+  await prisma.subject.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
+  await prisma.grade.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
+  await prisma.calendarEvent.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
+  await prisma.studySession.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
+  await prisma.flashcard.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
+  await prisma.savedTerm.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
+
+  // Create subjects for Maxi (only if none exist after migration)
   const subjectCount = await prisma.subject.count({ where: { userId: maxi.id } });
   if (subjectCount === 0) {
     for (const s of DEFAULT_SUBJECTS) {
@@ -58,15 +66,6 @@ async function main() {
       data: { userId: maxi.id, decimalPlaces: 1, sortOrder: "best", theme: "light" },
     });
   }
-
-  // Assign orphan data to Maxi
-  await prisma.subject.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
-  await prisma.grade.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
-  await prisma.calendarEvent.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
-  await prisma.studySession.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
-  await prisma.flashcard.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
-  await prisma.savedTerm.updateMany({ where: { userId: null }, data: { userId: maxi.id } });
-  console.log("Bestehende Daten Maxi zugewiesen.");
 }
 
 main()
