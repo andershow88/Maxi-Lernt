@@ -1,4 +1,4 @@
-const CACHE_VERSION = "maxi-lernt-v1";
+const CACHE_VERSION = "maxi-lernt-v3";
 const STATIC_ASSETS = ["/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
