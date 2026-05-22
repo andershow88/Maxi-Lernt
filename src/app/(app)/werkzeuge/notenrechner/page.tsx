@@ -4,12 +4,14 @@ import { GradeCalculator } from "@/components/werkzeuge/grade-calculator";
 import { PageHeader } from "@/components/ui/page-header";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function NotenrechnerPage() {
+  const user = await requireUser();
   const [subjects, settings] = await Promise.all([
-    getSubjectsWithGrades(),
+    getSubjectsWithGrades(user.id),
     getSettings(),
   ]);
 

@@ -117,7 +117,7 @@ export function StudyTimer({ stats }: { stats: Stats }) {
           </div>
 
           {saved && (
-            <div className="flex items-center justify-center gap-1.5 rounded-xl bg-green-50 border border-green-200 py-2 text-xs font-semibold text-green-600">
+            <div className="flex items-center justify-center gap-1.5 rounded-xl bg-green-500/10 border border-green-500/30 py-2 text-xs font-semibold text-green-500">
               <Check className="h-3.5 w-3.5" /> Lernzeit gespeichert!
             </div>
           )}

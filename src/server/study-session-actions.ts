@@ -1,16 +1,19 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
 export async function createStudySession(subjectId: string, minutes: number) {
-  await prisma.studySession.create({ data: { subjectId, minutes } });
+  const user = await requireUser();
+  await prisma.studySession.create({ data: { subjectId, minutes, userId: user.id } });
   revalidatePath("/werkzeuge/lernzeit");
   return { ok: true };
 }
 
 export async function getStudyStats() {
+  const user = await requireUser();
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
@@ -19,14 +22,14 @@ export async function getStudyStats() {
 
   const [weekSessions, monthSessions, subjects] = await Promise.all([
     prisma.studySession.findMany({
-      where: { date: { gte: weekStart, lte: weekEnd } },
+      where: { userId: user.id, date: { gte: weekStart, lte: weekEnd } },
       include: { subject: true },
     }),
     prisma.studySession.findMany({
-      where: { date: { gte: monthStart, lte: monthEnd } },
+      where: { userId: user.id, date: { gte: monthStart, lte: monthEnd } },
       include: { subject: true },
     }),
-    prisma.subject.findMany({ where: { hidden: false }, orderBy: { order: "asc" } }),
+    prisma.subject.findMany({ where: { userId: user.id, hidden: false }, orderBy: { order: "asc" } }),
   ]);
 
   const weekBySubject = new Map<string, number>();

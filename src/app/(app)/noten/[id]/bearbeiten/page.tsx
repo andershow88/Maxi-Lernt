@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { GradeForm } from "@/components/noten/grade-form";
 import { listSubjects } from "@/server/subject-queries";
 import { getGrade } from "@/server/grade-queries";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +14,11 @@ export default async function BearbeitenPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const user = await requireUser();
   const { id } = await params;
   const [grade, subjects] = await Promise.all([
-    getGrade(id),
-    listSubjects(),
+    getGrade(user.id, id),
+    listSubjects(user.id),
   ]);
 
   if (!grade) notFound();

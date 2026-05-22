@@ -1,11 +1,13 @@
 import { CoachForm } from "@/components/lerncoach/coach-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { listSubjects } from "@/server/subject-queries";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function LerncoachPage() {
-  const subjects = await listSubjects();
+  const user = await requireUser();
+  const subjects = await listSubjects(user.id);
 
   return (
     <div className="space-y-6">

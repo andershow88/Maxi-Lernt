@@ -89,7 +89,7 @@ export function GradeCalculator({ subjects, decimals }: { subjects: SubjectData[
           {diff !== null && (
             <div className="text-center">
               <p className="text-xs text-muted mb-1">Differenz</p>
-              <span className={cn("text-lg font-bold", diff < 0 ? "text-green-600" : diff > 0 ? "text-red-500" : "text-muted")}>
+              <span className={cn("text-lg font-bold", diff < 0 ? "text-green-500" : diff > 0 ? "text-red-500" : "text-muted")}>
                 {diff < 0 ? "" : "+"}{formatGrade(diff, decimals)}
               </span>
             </div>

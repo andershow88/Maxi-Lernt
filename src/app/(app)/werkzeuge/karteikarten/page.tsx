@@ -4,14 +4,16 @@ import { FlashcardView } from "@/components/werkzeuge/flashcard-view";
 import { PageHeader } from "@/components/ui/page-header";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function KarteikartenPage() {
+  const user = await requireUser();
   const [due, all, subjects] = await Promise.all([
     getDueFlashcards(),
     getAllFlashcards(),
-    listSubjects(),
+    listSubjects(user.id),
   ]);
 
   return (

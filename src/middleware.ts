@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "maxi-lernt-secret-key-2026");
 
-const PUBLIC = ["/login", "/api/auth", "/api/health", "/manifest.webmanifest", "/sw.js"];
+const PUBLIC = ["/login", "/registrieren", "/api/auth", "/api/health", "/manifest.webmanifest", "/sw.js"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

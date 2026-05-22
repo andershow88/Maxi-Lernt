@@ -1,21 +1,22 @@
-import { SignJWT } from "jose";
+import { prisma } from "@/lib/db";
+import { createToken } from "@/lib/auth";
+import { compareSync } from "bcryptjs";
 import { cookies } from "next/headers";
-
-const USERNAME = "maxi";
-const PASSWORD = "m_a_x_i!";
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "maxi-lernt-secret-key-2026");
 
 export async function POST(req: Request) {
   const { username, password } = await req.json();
 
-  if (username !== USERNAME || password !== PASSWORD) {
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user || !compareSync(password, user.passwordHash)) {
     return Response.json({ error: "Falscher Benutzername oder Passwort." }, { status: 401 });
   }
 
-  const token = await new SignJWT({ user: USERNAME })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("30d")
-    .sign(SECRET);
+  const token = await createToken({
+    id: user.id,
+    username: user.username,
+    name: user.name,
+    role: user.role,
+  });
 
   const jar = await cookies();
   jar.set("maxi-token", token, {
@@ -26,5 +27,5 @@ export async function POST(req: Request) {
     maxAge: 60 * 60 * 24 * 30,
   });
 
-  return Response.json({ ok: true });
+  return Response.json({ ok: true, role: user.role });
 }

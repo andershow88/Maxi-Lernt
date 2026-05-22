@@ -11,10 +11,10 @@ import { cn } from "@/lib/utils";
 import type { Subject, Grade } from "@prisma/client";
 
 const TYPE_COLORS: Record<string, string> = {
-  SCHULAUFGABE: "bg-red-100 text-red-700 border-red-200",
-  EX: "bg-amber-100 text-amber-700 border-amber-200",
-  MUENDLICH: "bg-blue-100 text-blue-700 border-blue-200",
-  SONSTIGE: "bg-slate-100 text-slate-600 border-slate-200",
+  SCHULAUFGABE: "bg-red-500/15 text-red-500 border-red-500/30",
+  EX: "bg-amber-500/15 text-amber-500 border-amber-500/30",
+  MUENDLICH: "bg-blue-500/15 text-blue-500 border-blue-500/30",
+  SONSTIGE: "bg-slate-500/15 text-slate-400 border-slate-500/30",
 };
 
 const WEIGHT_LABELS: Record<number, string> = { 0.5: "halbe", 1: "einfach", 2: "doppelt" };

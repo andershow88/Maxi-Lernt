@@ -330,7 +330,7 @@ function AIPanel({ onClose }: { onClose: () => void }) {
                 )}
 
                 {msg.pending && !msg.streaming && msg.confirmed === undefined && (
-                  <div className="mt-3 rounded-xl border-2 border-amber-400/60 bg-amber-50/10 p-3 space-y-2.5">
+                  <div className="mt-3 rounded-xl border-2 border-amber-500/40 bg-amber-500/10 p-3 space-y-2.5">
                     <div className="flex items-center gap-1.5 text-amber-500 text-xs font-bold">
                       <Zap className="h-3.5 w-3.5" /> Aktion bestätigen
                     </div>
@@ -338,7 +338,7 @@ function AIPanel({ onClose }: { onClose: () => void }) {
                       <button
                         onClick={() => handleConfirm(i, true)}
                         disabled={loading}
-                        className="flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-xs font-semibold text-white hover:bg-green-700 transition cursor-pointer"
+                        className="flex items-center gap-1.5 rounded-lg bg-green-500 px-4 py-2 text-xs font-semibold text-white hover:bg-green-600 transition cursor-pointer"
                       >
                         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                         Ja, ausführen
@@ -355,7 +355,7 @@ function AIPanel({ onClose }: { onClose: () => void }) {
                 )}
 
                 {msg.confirmed === true && (
-                  <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-green-600/10 px-3 py-1.5 text-xs font-semibold text-green-600 w-fit">
+                  <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-500 w-fit">
                     <Check className="h-3.5 w-3.5" /> Ausgeführt
                   </div>
                 )}

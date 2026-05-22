@@ -9,12 +9,14 @@ import { getSubjectsWithGrades } from "@/server/grade-queries";
 import { getSettings } from "@/server/settings-actions";
 import { calculateWeightedAverage, calculateOverallAverage, getMotivationalMessage } from "@/lib/grades";
 import { BarChart3 } from "lucide-react";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function NotenPage() {
+  const user = await requireUser();
   const [subjectsRaw, settings] = await Promise.all([
-    getSubjectsWithGrades(),
+    getSubjectsWithGrades(user.id),
     getSettings(),
   ]);
 

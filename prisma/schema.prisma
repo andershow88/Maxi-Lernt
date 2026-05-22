@@ -7,8 +7,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  SCHUELER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(SCHUELER)
+  classCode    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subjects      Subject[]
+  grades        Grade[]
+  events        CalendarEvent[]
+  studySessions StudySession[]
+  flashcards    Flashcard[]
+  savedTerms    SavedTerm[]
+  settings      Settings?
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model InviteCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  className String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  text       String   @db.Text
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
+
 model Subject {
   id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   icon      String   @default("BookOpen")
   color     String   @default("#4F46E5")
@@ -21,10 +72,14 @@ model Subject {
   events        CalendarEvent[]
   studySessions StudySession[]
   flashcards    Flashcard[]
+
+  @@index([userId])
 }
 
 model Grade {
   id        String    @id @default(cuid())
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   subjectId String
   subject   Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   value     Float
@@ -35,6 +90,7 @@ model Grade {
   createdAt DateTime  @default(now())
 
   @@index([subjectId])
+  @@index([userId])
 }
 
 enum GradeType {
@@ -46,6 +102,8 @@ enum GradeType {
 
 model CalendarEvent {
   id                 String    @id @default(cuid())
+  userId             String?
+  user               User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   subjectId          String?
   subject            Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   title              String
@@ -62,6 +120,7 @@ model CalendarEvent {
 
   @@index([date])
   @@index([subjectId])
+  @@index([userId])
 }
 
 enum EventType {
@@ -88,6 +147,8 @@ model StudyDay {
 
 model SavedTerm {
   id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   term        String
   explanation String?  @db.Text
   translation String?
@@ -95,10 +156,14 @@ model SavedTerm {
   favorite    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Settings {
-  id            String @id @default("default")
+  id            String @id @default(cuid())
+  userId        String @unique
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   decimalPlaces Int    @default(1)
   sortOrder     String @default("best")
   theme         String @default("light")
@@ -106,6 +171,8 @@ model Settings {
 
 model StudySession {
   id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   subjectId String
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   minutes   Int
@@ -114,21 +181,25 @@ model StudySession {
 
   @@index([subjectId])
   @@index([date])
+  @@index([userId])
 }
 
 model Flashcard {
-  id        String   @id @default(cuid())
-  subjectId String?
-  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
-  front     String
-  back      String   @db.Text
-  level     Int      @default(0)
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId  String?
+  subject    Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  front      String
+  back       String   @db.Text
+  level      Int      @default(0)
   nextReview DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([subjectId])
   @@index([nextReview])
+  @@index([userId])
 }
 
 model PushSubscription {

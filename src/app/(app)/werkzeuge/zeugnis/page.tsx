@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ArrowLeft } from "lucide-react";
 import * as Icons from "lucide-react";
 import Link from "next/link";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +15,9 @@ function getZeugnisNote(avg: number): number {
 }
 
 export default async function ZeugnisPage() {
+  const user = await requireUser();
   const [subjects, settings] = await Promise.all([
-    getSubjectsWithGrades(),
+    getSubjectsWithGrades(user.id),
     getSettings(),
   ]);
 
