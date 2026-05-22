@@ -57,7 +57,7 @@ export function ChatView({
   let lastDate = "";
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-280px)] min-h-[250px]">
+    <div className="flex flex-col h-[calc(100dvh-230px)] min-h-[250px]">
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-1 py-3 space-y-2">
         {messages.length === 0 && (
           <div className="text-center py-10 text-sm text-muted">
@@ -104,7 +104,7 @@ export function ChatView({
         })}
       </div>
 
-      <form onSubmit={handleSend} className="flex gap-2 pt-3 pb-2 border-t border-border/40 shrink-0">
+      <form onSubmit={handleSend} className="flex gap-2 pt-2 border-t border-border/40 shrink-0">
         <input
           ref={inputRef}
           value={text}
